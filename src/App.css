@@ -1,0 +1,733 @@
+/* ============================================================
+   Lumen — root layout
+   ============================================================ */
+
+.app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(80, 140, 255, 0.08), transparent 60%),
+    #06080f;
+  color: #e8ecf5;
+  overflow: hidden;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 5;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-mark {
+  font-size: 22px;
+  color: #8cd2ff;
+  text-shadow: 0 0 18px rgba(140, 210, 255, 0.65);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.brand-name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+.brand-tagline {
+  margin: 0;
+  font-size: 12px;
+  color: #8a94a9;
+  letter-spacing: 0.3px;
+}
+
+.app-main {
+  flex: 1 1 auto;
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-footer {
+  padding: 10px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  color: #5f6a82;
+  letter-spacing: 0.3px;
+  z-index: 5;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  border: none;
+  text-align: left;
+}
+
+/* Webcam stream. Hidden by default; the .gaze-video--diagnostic class
+   shows it as a low-opacity background under the diagnostic overlay so
+   the user can see their face under the cyan eye boxes. */
+.gaze-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Mirror so the user sees themselves naturally. */
+  transform: scaleX(-1);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  filter: brightness(0.45) contrast(1.05) saturate(0.7);
+}
+
+.gaze-video--show {
+  opacity: 0.85;
+}
+
+/* Full-viewport gaze overlay canvas (absolute, non-interactive). */
+.gaze-dot-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* Landmark visualization overlay — diagnostic only. */
+.landmark-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 25;
+}
+
+/* ============================================================
+   Status chip (top-right)
+   ============================================================ */
+
+.status-chip {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 14, 24, 0.6);
+  letter-spacing: 0.3px;
+}
+
+.status-chip--ok {
+  color: #9beac4;
+  border-color: rgba(155, 234, 196, 0.3);
+}
+
+.status-chip--loading {
+  color: #c7d3ea;
+}
+
+.status-chip--err {
+  color: #ffb7b7;
+  border-color: rgba(255, 183, 183, 0.35);
+}
+
+/* ============================================================
+   Boot / needs-calibration splash
+   ============================================================ */
+
+.boot-screen {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.boot-message {
+  max-width: 520px;
+  text-align: center;
+  z-index: 1;
+}
+
+.boot-message h2 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.boot-message p {
+  margin: 0;
+  color: #8a94a9;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.error-screen {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+  color: #ffb7b7;
+}
+
+/* ============================================================
+   Calibration
+   ============================================================ */
+
+.calibration {
+  position: relative;
+  flex: 1 1 auto;
+  background: #06080f;
+}
+
+.cal-target {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.18;
+  transition: opacity 260ms ease;
+}
+
+.cal-target.is-active {
+  opacity: 1;
+}
+
+.cal-target.is-done {
+  opacity: 0.08;
+}
+
+.cal-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid rgba(140, 210, 255, 0.4);
+}
+
+.cal-target.is-active .cal-ring {
+  border-color: rgba(140, 210, 255, 0.9);
+  box-shadow: 0 0 40px rgba(140, 210, 255, 0.55);
+  animation: cal-pulse 1.2s ease-in-out infinite;
+}
+
+.cal-core {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #8cd2ff;
+  box-shadow: 0 0 18px rgba(140, 210, 255, 0.8);
+}
+
+.cal-target.is-active .cal-core {
+  background: #ffffff;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.9);
+}
+
+@keyframes cal-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.cal-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.cal-message {
+  max-width: 440px;
+  text-align: center;
+  padding: 20px 28px;
+  background: rgba(6, 8, 15, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.cal-message h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.cal-message p {
+  margin: 4px 0 0;
+  color: #8a94a9;
+  font-size: 14px;
+}
+
+.cal-message--small {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #8a94a9;
+}
+
+.cal-hint {
+  font-size: 12px !important;
+  color: #626c82 !important;
+  margin-top: 10px !important;
+}
+
+/* ============================================================
+   Keyboard
+   ============================================================ */
+
+.keyboard-screen {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px 18px;
+  gap: 12px;
+  min-height: 0;
+}
+
+.text-strip {
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 22px;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.text-strip__content {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #e8ecf5;
+}
+
+.text-strip__content em {
+  color: #5f6a82;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.text-strip__hint {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: #8a94a9;
+  letter-spacing: 0.3px;
+}
+
+.text-strip__hint b {
+  color: #8cd2ff;
+  font-weight: 600;
+}
+
+.key-grid {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  gap: 10px;
+  min-height: 0;
+}
+
+.command-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.key {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  color: #e8ecf5;
+  font-family: inherit;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background-color 160ms ease, border-color 160ms ease;
+  --dwell-progress: 0;
+}
+
+.key:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.key--letter {
+  text-transform: uppercase;
+}
+
+.key--command {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: #c7d3ea;
+  background: rgba(80, 140, 255, 0.08);
+  border-color: rgba(80, 140, 255, 0.18);
+}
+
+.key--speak {
+  color: #9beac4;
+  background: rgba(88, 214, 141, 0.08);
+  border-color: rgba(88, 214, 141, 0.25);
+}
+
+.key--clear {
+  color: #ffcb88;
+  background: rgba(255, 170, 80, 0.06);
+  border-color: rgba(255, 170, 80, 0.2);
+}
+
+.key--secondary {
+  font-size: 14px;
+  font-weight: 500;
+  color: #8a94a9;
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Dwell progress overlay: fills from bottom as the user holds the gaze. */
+.key__progress {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(140, 210, 255, 0.35) 0%,
+    rgba(140, 210, 255, 0.1) 100%
+  );
+  transform-origin: bottom;
+  transform: scaleY(var(--dwell-progress));
+  transition: transform 60ms linear;
+}
+
+.key--speak .key__progress {
+  background: linear-gradient(
+    to top,
+    rgba(155, 234, 196, 0.4) 0%,
+    rgba(155, 234, 196, 0.12) 100%
+  );
+}
+
+.key--clear .key__progress {
+  background: linear-gradient(
+    to top,
+    rgba(255, 203, 136, 0.35) 0%,
+    rgba(255, 203, 136, 0.1) 100%
+  );
+}
+
+/* ============================================================
+   Debug HUD
+   ============================================================ */
+
+.debug-hud {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(6, 8, 15, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #c7d3ea;
+  pointer-events: none;
+  min-width: 150px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.debug-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.debug-row label {
+  color: #5f6a82;
+}
+
+.debug-row span {
+  color: #e8ecf5;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Pre-calibration screen
+   ============================================================ */
+
+.pre-cal-screen {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.pre-cal-card {
+  position: relative;
+  z-index: 5;
+  max-width: 540px;
+  padding: 32px 36px;
+  border-radius: 18px;
+  background: rgba(6, 8, 15, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  text-align: center;
+}
+
+.pre-cal-card h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.pre-cal-card p {
+  margin: 0 0 14px;
+  color: #8a94a9;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.pre-cal-hint {
+  font-size: 13px !important;
+  color: #626c82 !important;
+}
+
+.pre-cal-hint b {
+  color: #8cd2ff;
+}
+
+.pre-cal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 22px;
+}
+
+.btn {
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.btn--primary {
+  background: rgba(140, 210, 255, 0.15);
+  border-color: rgba(140, 210, 255, 0.4);
+  color: #e8f4ff;
+}
+
+.btn--primary:hover {
+  background: rgba(140, 210, 255, 0.25);
+  border-color: rgba(140, 210, 255, 0.65);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #8a94a9;
+}
+
+.btn--ghost:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #c7d3ea;
+}
+
+/* ============================================================
+   Header actions + Gemma pill
+   ============================================================ */
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gemma-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 14, 24, 0.6);
+  color: #c7d3ea;
+  cursor: pointer;
+  max-width: 320px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gemma-pill:hover:not(:disabled) {
+  border-color: rgba(140, 210, 255, 0.5);
+  color: #e8f4ff;
+}
+
+.gemma-pill:disabled {
+  cursor: progress;
+  opacity: 0.85;
+}
+
+.gemma-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: #5f6a82;
+}
+
+.gemma-pill--idle .gemma-pill__dot {
+  background: #5f6a82;
+}
+
+.gemma-pill--loading .gemma-pill__dot {
+  background: #ffcb88;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.gemma-pill--ready {
+  border-color: rgba(155, 234, 196, 0.4);
+  color: #9beac4;
+}
+
+.gemma-pill--ready .gemma-pill__dot {
+  background: #9beac4;
+  box-shadow: 0 0 10px rgba(155, 234, 196, 0.8);
+}
+
+.gemma-pill--error {
+  border-color: rgba(255, 183, 183, 0.4);
+  color: #ffb7b7;
+}
+
+.gemma-pill--error .gemma-pill__dot {
+  background: #ffb7b7;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ============================================================
+   Suggestion strip
+   ============================================================ */
+
+.suggestion-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  padding: 0;
+}
+
+.suggestion-strip--gemma::before {
+  content: none;
+}
+
+.key--suggestion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 12px;
+  background: rgba(140, 210, 255, 0.07);
+  border: 1px solid rgba(140, 210, 255, 0.25);
+  border-radius: 12px;
+  color: #e8f4ff;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  overflow: hidden;
+  --dwell-progress: 0;
+}
+
+.suggestion-strip--gemma .key--suggestion {
+  background: rgba(155, 234, 196, 0.07);
+  border-color: rgba(155, 234, 196, 0.3);
+  color: #d6f7e7;
+}
+
+.key--suggestion:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.key--suggestion .key__progress {
+  background: linear-gradient(
+    to top,
+    rgba(140, 210, 255, 0.32) 0%,
+    rgba(140, 210, 255, 0.08) 100%
+  );
+}
+
+.suggestion-strip--gemma .key--suggestion .key__progress {
+  background: linear-gradient(
+    to top,
+    rgba(155, 234, 196, 0.34) 0%,
+    rgba(155, 234, 196, 0.08) 100%
+  );
+}
+
+.suggestion-label {
+  position: relative;
+  z-index: 1;
+}
