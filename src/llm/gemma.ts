@@ -76,15 +76,46 @@ class GemmaService {
     }
   }
 
-  async loadFromUrl(url: string): Promise<void> {
+  async loadFromUrl(url: string, onProgress?: (pct: number) => void): Promise<void> {
     this.setStatus({ kind: "loading", message: "Downloading model…" });
     try {
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Model fetch failed: HTTP ${response.status}`);
       }
-      const blob = await response.arrayBuffer();
-      await this.loadFromBuffer(new Uint8Array(blob), blob.byteLength);
+      const total = Number(response.headers.get("Content-Length") ?? 0);
+      const reader = response.body?.getReader();
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.byteLength;
+          if (total > 0 && onProgress) {
+            onProgress(Math.round((received / total) * 100));
+          } else if (onProgress) {
+            // Unknown content length: emit a moving indicator capped at 99.
+            onProgress(Math.min(99, Math.round(received / (1024 * 1024))));
+          }
+        }
+      } else {
+        // Fallback if streaming isn't available (very old browsers).
+        const buf = await response.arrayBuffer();
+        chunks.push(new Uint8Array(buf));
+        received = buf.byteLength;
+        onProgress?.(100);
+      }
+
+      const full = new Uint8Array(received);
+      let offset = 0;
+      for (const chunk of chunks) {
+        full.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      await this.loadFromBuffer(full, received);
     } catch (err) {
       this.setStatus({ kind: "error", message: errorMessage(err) });
       throw err;

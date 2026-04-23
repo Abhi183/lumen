@@ -2,9 +2,36 @@
 
 **Your eyes. Your voice.**
 
-Lumen is a free, browser-based eye-gaze communication system for people who can no longer move their hands. It runs entirely on the device — no servers, no subscription, no installation. Open a URL, look at letters, speak.
+Lumen is a free, browser-based eye-gaze communication system for people who can no longer move their hands. It runs entirely on the device. No servers, no subscription, no installation. Open a URL, look at letters, speak.
 
 It's built for the **Gemma 4 Good Hackathon** (Kaggle, May 2026).
+
+## Try it
+
+Lumen has two input modes, selected on the landing screen:
+
+- **Gaze mode** — grants camera access, runs a 9-point calibration, then types by dwell. Intended daily-use flow for AAC users.
+- **Pointer mode** — no camera, no calibration. The cursor stands in for your gaze. Use this to review the keyboard flow, test the app for accessibility, or share a demo link with reviewers who can't grant camera access.
+
+Word suggestions work immediately from a built-in AAC vocabulary (bigrams + prefix matching, no model needed). Optionally, load on-device Gemma for smarter suggestions: either point the URL field to a hosted `.task` file or pick one from disk. Gemma stays optional, not a gate.
+
+## Local dev
+
+```bash
+npm install
+npm run dev     # http://localhost:5173
+npm test        # unit tests (vitest)
+npm run build   # production bundle into dist/
+```
+
+## Deploy to Cloudflare Pages
+
+```bash
+npx wrangler login
+npm run deploy  # builds + deploys dist/ to the "lumen" CF Pages project
+```
+
+On first run, wrangler will prompt to create the `lumen` project. After that, `npm run deploy` is one command. The repo includes `wrangler.toml` and `public/_headers` with the right MIME type for `.wasm` and long-cache rules for hashed assets.
 
 ---
 

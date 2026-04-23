@@ -1,0 +1,14 @@
+# Cloudflare Pages deploy config for Lumen.
+#
+# Usage:
+#   npm install
+#   npm run build
+#   npx wrangler pages deploy dist --project-name=lumen
+#
+# First-time setup: run `npx wrangler login` to authenticate with your
+# Cloudflare account, then create a new project named `lumen` in the
+# Cloudflare Pages dashboard (or let the first `pages deploy` create it).
+
+name = "lumen"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-04-23"

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { GazeEngine, type EngineStatus } from "./components/GazeEngine";
 import { GazeDot } from "./components/GazeDot";
 import { CalibrationScreen } from "./components/CalibrationScreen";
@@ -11,9 +11,16 @@ import {
   IDENTITY_CALIBRATION,
   type CalibrationModel,
 } from "./gaze/calibration";
+import { startPointerMode, stopPointerMode } from "./gaze/pointerStore";
 import "./App.css";
 
+// Input mode decides whether the GazeEngine (webcam + MediaPipe) runs at
+// all. Pointer mode makes Lumen demoable by anyone who clicks the URL,
+// including reviewers who don't want to grant camera access.
+type InputMode = "gaze" | "pointer";
+
 type AppPhase =
+  | { kind: "landing" }
   | { kind: "boot" }
   | { kind: "needs-calibration" }
   | { kind: "calibrating" }
@@ -21,7 +28,8 @@ type AppPhase =
   | { kind: "error"; message: string };
 
 function App() {
-  const [phase, setPhase] = useState<AppPhase>({ kind: "boot" });
+  const [mode, setMode] = useState<InputMode>("gaze");
+  const [phase, setPhase] = useState<AppPhase>({ kind: "landing" });
   const [engineStatus, setEngineStatus] = useState<EngineStatus>({ kind: "idle" });
 
   const handleEngineStatus = useCallback((status: EngineStatus) => {
@@ -40,9 +48,6 @@ function App() {
   }, []);
 
   const handleSkipCalibration = useCallback(() => {
-    // Use identity-ish mapping so the keyboard is *reachable* even without
-    // a proper calibration. Gaze will be inaccurate, but useful for debugging
-    // whether the whole downstream pipeline is wired correctly.
     gazeStore.setCalibration(IDENTITY_CALIBRATION);
     setPhase({ kind: "ready" });
   }, []);
@@ -53,19 +58,44 @@ function App() {
   }, []);
 
   const handleRecalibrate = useCallback(() => {
+    if (mode === "pointer") {
+      // Pointer mode doesn't need calibration. Return to landing instead.
+      stopPointerMode();
+      setPhase({ kind: "landing" });
+      return;
+    }
     gazeStore.setCalibration(null);
     setPhase({ kind: "calibrating" });
+  }, [mode]);
+
+  const handleChooseGaze = useCallback(() => {
+    setMode("gaze");
+    setPhase({ kind: "boot" });
   }, []);
+
+  const handleChoosePointer = useCallback(() => {
+    setMode("pointer");
+    startPointerMode();
+    setPhase({ kind: "ready" });
+  }, []);
+
+  // Clean up pointer mode when the user navigates back / the app unmounts.
+  useEffect(() => {
+    return () => {
+      stopPointerMode();
+    };
+  }, []);
+
+  const showEngine = mode === "gaze" && phase.kind !== "landing";
 
   return (
     <div className="app">
-      {/* Engine is mounted for the whole session — hidden video + loop.
-          During pre-calibration we show the video as a faint background
-          so the user can see their face under the diagnostic overlay. */}
-      <GazeEngine
-        onStatusChange={handleEngineStatus}
-        showVideo={phase.kind === "needs-calibration"}
-      />
+      {showEngine && (
+        <GazeEngine
+          onStatusChange={handleEngineStatus}
+          showVideo={phase.kind === "needs-calibration"}
+        />
+      )}
       <DebugHud />
 
       <header className="app-header">
@@ -78,11 +108,18 @@ function App() {
         </div>
         <div className="app-header-actions">
           <GemmaLoader />
-          <StatusChip status={engineStatus} />
+          <ModeChip mode={mode} status={engineStatus} />
         </div>
       </header>
 
       <main className="app-main">
+        {phase.kind === "landing" && (
+          <LandingScreen
+            onChooseGaze={handleChooseGaze}
+            onChoosePointer={handleChoosePointer}
+          />
+        )}
+
         {phase.kind === "boot" && <BootScreen status={engineStatus} />}
 
         {phase.kind === "needs-calibration" && (
@@ -107,15 +144,51 @@ function App() {
         )}
 
         {phase.kind === "error" && (
-          <div className="error-screen">
-            <h2>{phase.message}</h2>
-          </div>
+          <ErrorScreen
+            message={phase.message}
+            onFallbackPointer={handleChoosePointer}
+          />
         )}
       </main>
 
       <footer className="app-footer">
-        <span>Prototype · gaze + calibration + dwell keyboard · Gemma word prediction next</span>
+        <span>Lumen · free eye-gaze AAC · open source · on-device</span>
       </footer>
+    </div>
+  );
+}
+
+function LandingScreen({
+  onChooseGaze,
+  onChoosePointer,
+}: {
+  onChooseGaze: () => void;
+  onChoosePointer: () => void;
+}) {
+  return (
+    <div className="landing-screen">
+      <div className="landing-card">
+        <h2>Pick how you'd like to try Lumen.</h2>
+        <p className="landing-lead">
+          Lumen is a free eye-gaze communication tool. The gaze pipeline runs entirely on your
+          device — nothing is uploaded. If you're just here to look around, the pointer mode
+          works without a webcam.
+        </p>
+        <div className="landing-options">
+          <button className="landing-option" type="button" onClick={onChooseGaze}>
+            <div className="landing-option-title">Use my eyes</div>
+            <p>Grant camera access. Calibrate once, then type by looking. Intended for daily use.</p>
+          </button>
+          <button
+            className="landing-option landing-option--secondary"
+            type="button"
+            onClick={onChoosePointer}
+          >
+            <div className="landing-option-title">Try with a mouse</div>
+            <p>Use your cursor in place of your gaze. No camera, no calibration. Best for reviewing the keyboard flow.</p>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -176,7 +249,30 @@ function BootScreen({ status }: { status: EngineStatus }) {
   );
 }
 
-function StatusChip({ status }: { status: EngineStatus }) {
+function ErrorScreen({
+  message,
+  onFallbackPointer,
+}: {
+  message: string;
+  onFallbackPointer: () => void;
+}) {
+  return (
+    <div className="error-screen">
+      <h2>{message}</h2>
+      <p className="error-hint">
+        You can still try the keyboard flow with your mouse. No camera needed.
+      </p>
+      <button className="btn btn--primary" type="button" onClick={onFallbackPointer}>
+        Continue with mouse
+      </button>
+    </div>
+  );
+}
+
+function ModeChip({ mode, status }: { mode: InputMode; status: EngineStatus }) {
+  if (mode === "pointer") {
+    return <span className="status-chip status-chip--ok">pointer mode</span>;
+  }
   if (status.kind === "running") {
     return <span className="status-chip status-chip--ok">tracking · {status.fps} fps</span>;
   }

@@ -1,0 +1,16 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), microphone=()
+
+# MediaPipe WASM needs the right MIME type; Cloudflare Pages handles most
+# file types correctly but some CDNs do not. Pin the expected types here.
+/*.wasm
+  Content-Type: application/wasm
+
+/*.task
+  Content-Type: application/octet-stream
+
+# Long-cache static JS/CSS/fonts (Vite emits hashed filenames).
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
